@@ -112,6 +112,12 @@ toggleBtn.addEventListener('click', async () => {
   catch (error) { stopAll(error.message || 'Mic permission needed.') }
 })
 
+// GSAP entrance animation for translate page
+gsap.from('.translate-board', { y: 20, opacity: 0, duration: 0.6, ease: 'power3.out', delay: 0.1 })
+gsap.from('.panel-label', { y: -6, opacity: 0, duration: 0.4, stagger: 0.08, ease: 'power2.out', delay: 0.3 })
+gsap.from('.horizontal-divider', { scaleX: 0, duration: 0.5, ease: 'power3.out', delay: 0.5, transformOrigin: 'left center' })
+gsap.from('.canvas-control', { scale: 0, duration: 0.4, ease: 'back.out(2)', delay: 0.7 })
+
 clearBtn.addEventListener('click', () => {
   activeTranscript = ''
   activeTranslation = ''
