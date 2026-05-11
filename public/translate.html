@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Translate · PI</title>
+    <meta name="description" content="Minimal live translation interface." />
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/app.js"></script>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <a class="back" href="/">← PI</a>
+        <div class="context-row" id="contexts">
+          <button class="pill active" data-context="school">School</button>
+          <button class="pill" data-context="class">Class</button>
+          <button class="pill" data-context="friends">Friends</button>
+          <button class="pill" data-context="travel">Travel</button>
+        </div>
+      </header>
+
+      <section class="stage">
+        <div class="zone">
+          <div class="zone-label">Original</div>
+          <div id="originalText" class="zone-text zone-empty">Waiting for speech…</div>
+        </div>
+
+        <div class="zone">
+          <div class="zone-label">Translation</div>
+          <div id="translatedText" class="zone-text zone-empty">Translation will appear here.</div>
+        </div>
+      </section>
+
+      <section>
+        <div id="status" class="status">Choose a context, then start.</div>
+        <div class="controls">
+          <button id="toggleBtn" class="primary">Start</button>
+          <button id="clearBtn" class="secondary">Clear</button>
+        </div>
+        <p class="note">Deepgram is wired through the server. Replace the adapter later if you change providers.</p>
+      </section>
+    </main>
+  </body>
+</html>
