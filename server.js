@@ -37,27 +37,19 @@ function safeJoin(base, target) {
 
 function transcriptFromDeepgram(payload) {
   const alt = payload?.results?.channels?.[0]?.alternatives?.[0]
-  const transcript = alt?.transcript?.trim() || ''
-  const translation = alt?.translation?.trim() || payload?.results?.translation?.trim() || transcript
-  const speechFinal = Boolean(payload?.results?.speech_final)
-  const isFinal = Boolean(payload?.results?.is_final)
-  return { transcript, translation, speechFinal, isFinal }
+  return {
+    transcript: alt?.transcript?.trim() || '',
+    translation: alt?.translation?.trim() || payload?.results?.translation?.trim() || alt?.transcript?.trim() || '',
+    speechFinal: Boolean(payload?.results?.speech_final),
+    isFinal: Boolean(payload?.results?.is_final),
+  }
 }
 
 async function handleTranscribe(req, res) {
-  if (!deepgramKey) {
-    return send(
-      res,
-      200,
-      JSON.stringify({ transcript: '', translation: '', note: 'Set DEEPGRAM_API_KEY to enable live transcription.' }),
-      { 'Content-Type': 'application/json; charset=utf-8' },
-    )
-  }
+  if (!deepgramKey) return send(res, 200, JSON.stringify({ note: 'Set DEEPGRAM_API_KEY to enable live transcription.' }), { 'Content-Type': 'application/json; charset=utf-8' })
 
   const audio = await readBody(req)
-  if (!audio.length) {
-    return send(res, 400, JSON.stringify({ error: 'Empty audio body.' }), { 'Content-Type': 'application/json; charset=utf-8' })
-  }
+  if (!audio.length) return send(res, 400, JSON.stringify({ error: 'Empty audio body.' }), { 'Content-Type': 'application/json; charset=utf-8' })
 
   const url = new URL('https://api.deepgram.com/v1/listen')
   url.searchParams.set('model', process.env.DEEPGRAM_MODEL || 'nova-3')
@@ -72,33 +64,22 @@ async function handleTranscribe(req, res) {
 
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      Authorization: `Token ${deepgramKey}`,
-      'Content-Type': req.headers['content-type'] || 'audio/webm',
-    },
+    headers: { Authorization: `Token ${deepgramKey}`, 'Content-Type': req.headers['content-type'] || 'audio/webm' },
     body: audio,
   })
 
   const text = await response.text()
-  if (!response.ok) {
-    return send(res, response.status, JSON.stringify({ error: text.slice(0, 500) }), { 'Content-Type': 'application/json; charset=utf-8' })
-  }
+  if (!response.ok) return send(res, response.status, JSON.stringify({ error: text.slice(0, 500) }), { 'Content-Type': 'application/json; charset=utf-8' })
 
   let parsed = {}
-  try {
-    parsed = JSON.parse(text)
-  } catch {
-    parsed = {}
-  }
-
-  const { transcript, translation, speechFinal, isFinal } = transcriptFromDeepgram(parsed)
-  return send(res, 200, JSON.stringify({ transcript, translation, speechFinal, isFinal }), { 'Content-Type': 'application/json; charset=utf-8' })
+  try { parsed = JSON.parse(text) } catch {}
+  const payload = transcriptFromDeepgram(parsed)
+  return send(res, 200, JSON.stringify(payload), { 'Content-Type': 'application/json; charset=utf-8' })
 }
 
 async function serveStatic(req, res, pathname) {
-  const filePath = pathname === '/' ? '/index.html' : pathname === '/translate' ? '/translate.html' : pathname
+  const filePath = pathname === '/' ? '/index.html' : pathname === '/translate' ? '/translate.html' : pathname === '/setup' ? '/setup.html' : pathname
   const absolute = safeJoin(publicDir, filePath)
-
   try {
     const data = await fs.readFile(absolute)
     const ext = path.extname(absolute)
@@ -111,22 +92,11 @@ async function serveStatic(req, res, pathname) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url || '/', 'http://localhost')
-
   if (req.method === 'POST' && url.pathname === '/api/transcribe') {
-    try {
-      return await handleTranscribe(req, res)
-    } catch (error) {
-      return send(res, 500, JSON.stringify({ error: error?.message || 'Transcribe failed.' }), { 'Content-Type': 'application/json; charset=utf-8' })
-    }
+    try { return await handleTranscribe(req, res) } catch (error) { return send(res, 500, JSON.stringify({ error: error?.message || 'Transcribe failed.' }), { 'Content-Type': 'application/json; charset=utf-8' }) }
   }
-
-  if (req.method === 'GET' || req.method === 'HEAD') {
-    return await serveStatic(req, res, url.pathname)
-  }
-
+  if (req.method === 'GET' || req.method === 'HEAD') return await serveStatic(req, res, url.pathname)
   send(res, 405, 'Method Not Allowed')
 })
 
-server.listen(port, () => {
-  console.log(`PI Translate running on http://localhost:${port}`)
-})
+server.listen(port, () => console.log(`PI Translate running on http://localhost:${port}`))
