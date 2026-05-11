@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Setup · PI</title>
+    <meta name="description" content="Choose translation direction and scene." />
+    <link rel="stylesheet" href="/styles.css" />
+    <script defer src="/setup.js"></script>
+  </head>
+  <body>
+    <main class="shell setup-shell">
+      <section class="setup-card">
+        <div class="kicker">Language</div>
+        <h1 class="setup-title">Translate from</h1>
+        <div class="setup-grid" id="fromGrid">
+          <button class="setup-btn active" data-value="zh">Chinese</button>
+          <button class="setup-btn" data-value="es">Spanish</button>
+          <button class="setup-btn" data-value="ko">Korean</button>
+          <button class="setup-btn" data-value="ja">Japanese</button>
+        </div>
+
+        <div class="kicker setup-gap">Translate to</div>
+        <div class="setup-grid" id="toGrid">
+          <button class="setup-btn active" data-value="en">English</button>
+          <button class="setup-btn" data-value="zh">Chinese</button>
+          <button class="setup-btn" data-value="es">Spanish</button>
+          <button class="setup-btn" data-value="other">Other</button>
+        </div>
+
+        <div class="kicker setup-gap">Scene</div>
+        <div class="scene-grid" id="sceneGrid">
+          <button class="scene-btn active" data-scene="school">School</button>
+          <button class="scene-btn" data-scene="class">Class</button>
+          <button class="scene-btn" data-scene="friends">Friends</button>
+          <button class="scene-btn" data-scene="other">Other</button>
+        </div>
+
+        <input id="customScene" class="scene-input" type="text" maxlength="18" placeholder="Custom scene" />
+        <a id="goBtn" class="cta compact-cta" href="/translate">Continue</a>
+      </section>
+    </main>
+  </body>
+</html>

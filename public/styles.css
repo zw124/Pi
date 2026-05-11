@@ -63,7 +63,7 @@ button, input { font: inherit; }
   min-height: 52px;
   padding: 0 18px;
   margin-top: 24px;
-  border-radius: 999px;
+  border-radius: 14px;
   border: 1px solid var(--line);
   background: var(--accent);
   color: #050505;
@@ -129,7 +129,7 @@ button, input { font: inherit; }
 
 .zone {
   border: 1px solid var(--line);
-  border-radius: 28px;
+  border-radius: 18px;
   background: var(--panel);
   padding: 18px;
   min-height: 0;
@@ -168,7 +168,7 @@ button, input { font: inherit; }
 .primary,
 .secondary {
   min-height: 52px;
-  border-radius: 18px;
+  border-radius: 12px;
   border: 1px solid var(--line);
   padding: 0 16px;
   background: transparent;
@@ -203,3 +203,26 @@ button, input { font: inherit; }
   .app { padding: 22px; }
   .stage { max-width: 760px; margin: 0 auto; }
 }
+
+
+.setup-shell { align-items: flex-start; }
+.setup-card { width: min(100%, 440px); display: flex; flex-direction: column; gap: 12px; }
+.setup-title { margin: 0 0 4px; font-size: 34px; letter-spacing: -0.05em; }
+.setup-grid, .scene-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.setup-btn, .scene-btn { min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text); }
+.setup-btn.active, .scene-btn.active { background: var(--panel-strong); }
+.scene-input { min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: transparent; color: var(--text); padding: 0 14px; }
+.compact-cta { align-self: stretch; text-align: center; }
+.translate-shell { min-height: 100vh; display: flex; flex-direction: column; padding: 16px; gap: 10px; }
+.translate-topbar { display:flex; justify-content:space-between; align-items:center; }
+.mini-pill, .ghost-btn { min-height: 38px; border-radius: 12px; border:1px solid var(--line); background: transparent; color: var(--text); padding: 0 12px; }
+.translate-viewport { flex:1; display:grid; grid-template-columns: 132px 1px 1fr; gap: 14px; align-items:stretch; min-height: 0; }
+.left-rail { display:flex; flex-direction:column; gap: 6px; }
+.rail-text { font-size: 13px; line-height: 1.4; color: var(--text); }
+.rail-gap { margin-top: 10px; }
+.split-line { width: 1px; background: rgba(244,241,234,0.14); }
+.right-stage { display:grid; grid-template-rows: 1fr 1fr; min-height: 0; }
+.stage-half { display:flex; align-items:flex-end; font-size: clamp(20px, 5vw, 34px); letter-spacing: -0.05em; line-height: 1.2; }
+.upper { padding-bottom: 12px; border-bottom: 1px solid rgba(244,241,234,0.10); }
+.lower { padding-top: 12px; }
+.tiny-status { font-size: 12px; color: var(--muted); }

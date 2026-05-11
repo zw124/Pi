@@ -39,7 +39,9 @@ function transcriptFromDeepgram(payload) {
   const alt = payload?.results?.channels?.[0]?.alternatives?.[0]
   const transcript = alt?.transcript?.trim() || ''
   const translation = alt?.translation?.trim() || payload?.results?.translation?.trim() || transcript
-  return { transcript, translation }
+  const speechFinal = Boolean(payload?.results?.speech_final)
+  const isFinal = Boolean(payload?.results?.is_final)
+  return { transcript, translation, speechFinal, isFinal }
 }
 
 async function handleTranscribe(req, res) {
@@ -47,11 +49,7 @@ async function handleTranscribe(req, res) {
     return send(
       res,
       200,
-      JSON.stringify({
-        transcript: '',
-        translation: '',
-        note: 'Set DEEPGRAM_API_KEY to enable live transcription.',
-      }),
+      JSON.stringify({ transcript: '', translation: '', note: 'Set DEEPGRAM_API_KEY to enable live transcription.' }),
       { 'Content-Type': 'application/json; charset=utf-8' },
     )
   }
@@ -62,12 +60,15 @@ async function handleTranscribe(req, res) {
   }
 
   const url = new URL('https://api.deepgram.com/v1/listen')
-  url.searchParams.set('model', 'nova-3')
+  url.searchParams.set('model', process.env.DEEPGRAM_MODEL || 'nova-3')
   url.searchParams.set('smart_format', 'true')
   url.searchParams.set('punctuate', 'true')
   url.searchParams.set('detect_language', 'true')
   url.searchParams.set('translate', 'true')
   url.searchParams.set('utterances', 'false')
+  url.searchParams.set('endpointing', process.env.DEEPGRAM_ENDPOINTING || '500')
+  url.searchParams.set('vad_events', 'true')
+  url.searchParams.set('interim_results', 'true')
 
   const response = await fetch(url, {
     method: 'POST',
@@ -90,13 +91,8 @@ async function handleTranscribe(req, res) {
     parsed = {}
   }
 
-  const { transcript, translation } = transcriptFromDeepgram(parsed)
-  return send(
-    res,
-    200,
-    JSON.stringify({ transcript, translation, raw: parsed?.metadata?.request_id ? undefined : undefined }),
-    { 'Content-Type': 'application/json; charset=utf-8' },
-  )
+  const { transcript, translation, speechFinal, isFinal } = transcriptFromDeepgram(parsed)
+  return send(res, 200, JSON.stringify({ transcript, translation, speechFinal, isFinal }), { 'Content-Type': 'application/json; charset=utf-8' })
 }
 
 async function serveStatic(req, res, pathname) {

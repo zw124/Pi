@@ -3,114 +3,118 @@ const toggleBtn = document.getElementById('toggleBtn')
 const clearBtn = document.getElementById('clearBtn')
 const originalEl = document.getElementById('originalText')
 const translatedEl = document.getElementById('translatedText')
-const contextButtons = [...document.querySelectorAll('[data-context]')]
+const modeText = document.getElementById('modeText')
+const noiseText = document.getElementById('noiseText')
 
-let activeContext = 'school'
-let recorder = null
+const params = new URLSearchParams(location.search)
+const from = params.get('from') || 'zh'
+const to = params.get('to') || 'en'
+const scene = params.get('scene') || 'school'
+const custom = params.get('custom') || ''
+
+let mediaRecorder = null
 let stream = null
 let isRecording = false
+let silenceTimer = null
+let chunks = []
+let activeTranscript = ''
+let activeTranslation = ''
+let speechStart = 0
+let lastSoundAt = 0
 
-const mimeCandidates = [
-  'audio/webm;codecs=opus',
-  'audio/webm',
-  'audio/mp4',
-  'audio/mpeg',
-]
+const mimeCandidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4']
+const languageMap = { zh: 'Chinese', en: 'English', es: 'Spanish', ko: 'Korean', ja: 'Japanese', other: 'Other' }
 
-function setStatus(text) {
-  statusEl.textContent = text
-}
+modeText.textContent = `${scene === 'other' ? (custom || 'Other') : scene[0].toUpperCase() + scene.slice(1)} · ${languageMap[from]} → ${languageMap[to]}`
 
-function setActiveContext(value) {
-  activeContext = value
-  contextButtons.forEach((btn) => btn.classList.toggle('active', btn.dataset.context === value))
-}
-
-function appendText(el, next) {
-  if (!next) return
-  if (el.classList.contains('zone-empty')) {
-    el.classList.remove('zone-empty')
-    el.textContent = next
-    return
-  }
-  el.textContent = `${el.textContent}\n${next}`.trim()
+function setStatus(text) { statusEl.textContent = text }
+function setZone(el, value, fallback) { el.textContent = value || fallback }
+function pickMimeType() { return mimeCandidates.find((type) => window.MediaRecorder?.isTypeSupported?.(type)) || '' }
+function volumeRms(blob) { return blob.size < 500 ? 0 : 1 }
+function isNoise(blob) { return volumeRms(blob) === 0 }
+function appendChunkText(chunkText, translatedText) {
+  if (chunkText) activeTranscript = activeTranscript ? `${activeTranscript} ${chunkText}` : chunkText
+  if (translatedText) activeTranslation = activeTranslation ? `${activeTranslation} ${translatedText}` : translatedText
+  setZone(originalEl, activeTranscript, 'Waiting.')
+  setZone(translatedEl, activeTranslation, 'Translation.')
 }
 
 async function sendChunk(blob) {
-  const response = await fetch('/api/transcribe?context=' + encodeURIComponent(activeContext), {
+  if (isNoise(blob)) {
+    setStatus('Noise ignored.')
+    return
+  }
+
+  const response = await fetch(`/api/transcribe?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}&scene=${encodeURIComponent(scene)}&custom=${encodeURIComponent(custom)}`, {
     method: 'POST',
     headers: { 'Content-Type': blob.type || 'audio/webm' },
     body: blob,
   })
+
   const data = await response.json()
   if (!response.ok) throw new Error(data.error || 'Transcribe failed')
-
-  if (data.note) {
-    setStatus(data.note)
-    return
-  }
-
-  if (data.transcript) appendText(originalEl, data.transcript)
-  if (data.translation) appendText(translatedEl, data.translation)
-  if (!data.transcript && !data.translation) setStatus('No speech detected.')
+  if (data.note) { setStatus(data.note); return }
+  if (data.transcript || data.translation) appendChunkText(data.transcript, data.translation)
+  setStatus(data.speechFinal ? 'Final.' : 'Listening…')
 }
 
-function pickMimeType() {
-  return mimeCandidates.find((type) => window.MediaRecorder?.isTypeSupported?.(type)) || ''
+function stopAll(message = 'Stopped.') {
+  if (silenceTimer) clearTimeout(silenceTimer)
+  silenceTimer = null
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop()
+  if (stream) stream.getTracks().forEach((track) => track.stop())
+  mediaRecorder = null
+  stream = null
+  isRecording = false
+  toggleBtn.textContent = 'Start / End'
+  setStatus(message)
 }
 
 async function startRecording() {
   stream = await navigator.mediaDevices.getUserMedia({ audio: true })
   const mimeType = pickMimeType()
-  recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+  mediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
+  chunks = []
+  speechStart = Date.now()
+  lastSoundAt = Date.now()
 
-  recorder.ondataavailable = async (event) => {
+  mediaRecorder.ondataavailable = async (event) => {
     if (!event.data || !event.data.size) return
-    try {
-      await sendChunk(event.data)
-    } catch (error) {
-      setStatus(error.message)
+    if (!isRecording) return
+    if (!isNoise(event.data)) {
+      lastSoundAt = Date.now()
+      chunks.push(event.data)
     }
+    if (silenceTimer) clearTimeout(silenceTimer)
+    silenceTimer = setTimeout(async () => {
+      const silentFor = Date.now() - lastSoundAt
+      if (silentFor < 500) return
+      if (!chunks.length) return stopAll('Silent.')
+      const blob = new Blob(chunks, { type: chunks[0]?.type || 'audio/webm' })
+      chunks = []
+      try { await sendChunk(blob) } catch (error) { setStatus(error.message) }
+      stopAll('Silent.')
+    }, 500)
   }
 
-  recorder.start(1800)
+  mediaRecorder.start(100)
   isRecording = true
-  toggleBtn.textContent = 'Stop'
-  setStatus(`Listening for ${activeContext} mode…`)
+  toggleBtn.textContent = 'End'
+  setStatus('Listening…')
 }
-
-function stopRecording() {
-  if (recorder && recorder.state !== 'inactive') recorder.stop()
-  if (stream) stream.getTracks().forEach((track) => track.stop())
-  recorder = null
-  stream = null
-  isRecording = false
-  toggleBtn.textContent = 'Start'
-  setStatus('Stopped.')
-}
-
-contextButtons.forEach((btn) => {
-  btn.addEventListener('click', () => {
-    setActiveContext(btn.dataset.context)
-    if (!isRecording) setStatus(`Mode: ${activeContext}`)
-  })
-})
 
 toggleBtn.addEventListener('click', async () => {
-  try {
-    if (isRecording) stopRecording()
-    else await startRecording()
-  } catch (error) {
-    setStatus(error.message || 'Mic permission needed.')
-  }
+  try { if (isRecording) stopAll(); else await startRecording() }
+  catch (error) { stopAll(error.message || 'Mic permission needed.') }
 })
 
 clearBtn.addEventListener('click', () => {
-  originalEl.textContent = 'Waiting for speech…'
-  translatedEl.textContent = 'Translation will appear here.'
-  originalEl.classList.add('zone-empty')
-  translatedEl.classList.add('zone-empty')
-  setStatus(`Mode: ${activeContext}`)
+  activeTranscript = ''
+  activeTranslation = ''
+  setZone(originalEl, '', 'Waiting.')
+  setZone(translatedEl, '', 'Translation.')
+  setStatus('Ready.')
 })
 
-setActiveContext(activeContext)
+setZone(originalEl, '', 'Waiting.')
+setZone(translatedEl, '', 'Translation.')
