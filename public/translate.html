@@ -12,27 +12,30 @@
     <main class="translate-shell">
       <header class="translate-topbar">
         <a class="back" href="/setup">← PI</a>
-        <button id="toggleBtn" class="mini-pill">Start / End</button>
+        <div class="mode-pill" id="modeText">Chinese → English</div>
       </header>
 
-      <section class="translate-viewport">
-        <aside class="left-rail">
-          <div class="kicker">Mode</div>
-          <div class="rail-text" id="modeText">School · Chinese → English</div>
-          <div class="kicker rail-gap">Noise</div>
-          <div class="rail-text" id="noiseText">Quiet</div>
-        </aside>
+      <section class="translate-board">
+        <article class="translation-panel original-panel">
+          <div class="panel-label">Original</div>
+          <div class="stage-text" id="originalText">Waiting.</div>
+        </article>
 
-        <div class="split-line"></div>
+        <div class="horizontal-divider" aria-hidden="true">
+          <span></span>
+          <button id="toggleBtn" class="canvas-control" type="button">Start</button>
+        </div>
 
-        <section class="right-stage">
-          <div class="stage-half upper" id="originalText">Waiting.</div>
-          <div class="stage-half lower" id="translatedText">Translation.</div>
-        </section>
+        <article class="translation-panel translated-panel">
+          <div class="panel-label">Translation</div>
+          <div class="stage-text" id="translatedText">Translation.</div>
+        </article>
       </section>
 
-      <div id="status" class="status tiny-status">Ready.</div>
-      <button id="clearBtn" class="ghost-btn">Clear</button>
+      <footer class="translate-footer">
+        <div id="status" class="status tiny-status">Ready.</div>
+        <button id="clearBtn" class="ghost-btn">Clear</button>
+      </footer>
     </main>
   </body>
 </html>

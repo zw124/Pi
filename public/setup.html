@@ -10,35 +10,58 @@
   </head>
   <body>
     <main class="shell setup-shell">
-      <section class="setup-card">
-        <div class="kicker">Language</div>
-        <h1 class="setup-title">Translate from</h1>
-        <div class="setup-grid" id="fromGrid">
-          <button class="setup-btn active" data-value="zh">Chinese</button>
-          <button class="setup-btn" data-value="es">Spanish</button>
-          <button class="setup-btn" data-value="ko">Korean</button>
-          <button class="setup-btn" data-value="ja">Japanese</button>
-        </div>
+      <section class="setup-card glass-card">
+        <div class="kicker">PI Translate</div>
+        <h1 class="setup-title">Set the conversation.</h1>
+        <p class="subtle setup-copy">Clean, fast language setup without filling the whole screen with buttons.</p>
 
-        <div class="kicker setup-gap">Translate to</div>
-        <div class="setup-grid" id="toGrid">
-          <button class="setup-btn active" data-value="en">English</button>
-          <button class="setup-btn" data-value="zh">Chinese</button>
-          <button class="setup-btn" data-value="es">Spanish</button>
-          <button class="setup-btn" data-value="other">Other</button>
+        <div class="language-stack" aria-label="Translation languages">
+          <button class="language-row" id="fromPicker" type="button" data-picker="from">
+            <span>
+              <span class="row-label">Translate from</span>
+              <strong id="fromName">Chinese</strong>
+            </span>
+            <span class="chevron">›</span>
+          </button>
+          <button class="language-row" id="toPicker" type="button" data-picker="to">
+            <span>
+              <span class="row-label">Translate to</span>
+              <strong id="toName">English</strong>
+            </span>
+            <span class="chevron">›</span>
+          </button>
         </div>
 
         <div class="kicker setup-gap">Scene</div>
-        <div class="scene-grid" id="sceneGrid">
-          <button class="scene-btn active" data-scene="school">School</button>
-          <button class="scene-btn" data-scene="class">Class</button>
-          <button class="scene-btn" data-scene="friends">Friends</button>
-          <button class="scene-btn" data-scene="other">Other</button>
+        <div class="scene-strip" id="sceneGrid">
+          <button class="scene-chip active" data-scene="school">School</button>
+          <button class="scene-chip" data-scene="class">Class</button>
+          <button class="scene-chip" data-scene="friends">Friends</button>
+          <button class="scene-chip" data-scene="travel">Travel</button>
+          <button class="scene-chip" data-scene="other">Other</button>
         </div>
 
-        <input id="customScene" class="scene-input" type="text" maxlength="18" placeholder="Custom scene" />
+        <input id="customScene" class="scene-input" type="text" maxlength="22" placeholder="Custom scene" />
         <a id="goBtn" class="cta compact-cta" href="/translate">Continue</a>
       </section>
     </main>
+
+    <div class="sheet-backdrop" id="sheetBackdrop" hidden></div>
+    <section class="language-sheet" id="languageSheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+      <div class="sheet-handle"></div>
+      <div class="sheet-head">
+        <div>
+          <div class="kicker">Language</div>
+          <h2 id="sheetTitle">Choose language</h2>
+        </div>
+        <button class="sheet-close" id="closeSheet" type="button" aria-label="Close">×</button>
+      </div>
+      <label class="search-wrap">
+        <span>Search</span>
+        <input id="languageSearch" type="search" placeholder="Type a language name…" autocomplete="off" />
+      </label>
+      <div class="language-list" id="languageList" role="listbox"></div>
+      <button class="cta sheet-done" id="doneSheet" type="button">Done</button>
+    </section>
   </body>
 </html>
